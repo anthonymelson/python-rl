@@ -1,0 +1,71 @@
+import numpy as np
+import random
+import pandas as pd
+import matplotlib.pyplot as plt
+
+class N_Bernoulli_Bandit:
+    def __init__(self, total_reward = 0, rounds = 0, machine_played = [], wins = [], losses = [], machine_probs = []):
+
+        self.total_reward = total_reward
+        self.machine_played = machine_played
+        self.wins = wins
+        self.losses = losses
+        self.machine_probs = machine_probs
+        self.rounds = rounds
+
+    def simulate(self, num_machines = 3, rounds = 1000, prob_range = [0,1]):
+        machine_probs = np.random.uniform(low=prob_range[0], high=prob_range[1], size=num_machines).round(2) # Win Probability of Machines
+        rounds = 500 # Total Plays
+        wins = np.zeros(num_machines) #Tracks Wins for Each Machine
+        losses = np.zeros(num_machines) # Tracks Losses for Each Machine
+        total_reward = 0 # Tracks Overall Wins for All Rounds
+        machine_played = [] # Tracks Total Plays for Each Machine
+
+        # Iterate Through Rounds
+        for i in range(0, rounds):
+            probs = np.zeros(num_machines) # Store Each Machine's Draw to be Played
+            # Iterate Through Machines
+            for machine in range(0, num_machines):
+                probs[machine] = random.betavariate(wins[machine] + 1, losses[machine] + 1) # Draw Based on Previous Results and Randomness
+
+            selected_machine = np.argmax(probs) # Machine With Best Draw
+            machine_played.append(selected_machine) # Collect Machine With Best Draw
+
+            # Simulate Playing the Selected Machine, and Collect Reward
+            reward = np.random.choice([0,1],1, p = [1 - machine_probs[selected_machine], machine_probs[selected_machine]])
+
+            # Count Wins, Losses, and Reward
+            if reward == 1:
+                wins[selected_machine] = wins[selected_machine] + 1
+            else:
+                losses[selected_machine] = losses[selected_machine] + 1
+            total_reward = total_reward + reward
+
+        self.total_reward = total_reward
+        self.machine_played = machine_played
+        self.wins = wins
+        self.losses = losses
+        self.machine_probs = machine_probs
+        self.rounds = rounds
+
+        return
+
+    def summary(self):
+        # Create and Print DataFrame with Regret, Wins, Losses, and Probabilities of Machine
+        regret = (max(self.machine_probs) * self.rounds) - self.total_reward
+        df = pd.DataFrame(self.wins, columns=['Wins'])
+        df['Losses'] = self.losses
+        df['Actual Prob'] = self.machine_probs
+        print(df)
+        print()
+        print(f"Machine {np.argmax(self.wins)} won most, with {int(self.wins[np.argmax(self.wins)])} wins")
+        print(f"Total Reward: {self.total_reward[0]}")
+        print(f"Total Regret: {regret[0]}")
+
+    def hist_plot(self):
+        # Plot Histogram of Total Plays For Each Machine
+        plt.hist(self.machine_played)
+        plt.title('Histogram of Machine Plays')
+        plt.xlabel('Machines')
+        plt.ylabel('Number of Times Selected')
+        plt.show()
