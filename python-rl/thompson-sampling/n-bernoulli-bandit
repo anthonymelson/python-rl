@@ -4,7 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 class N_Bernoulli_Bandit:
-    def __init__(self, total_reward = 0, rounds = 0, machine_played = [], wins = [], losses = [], machine_probs = []):
+    def __init__(self, total_reward = 0, rounds = 0, num_machines = 3, machine_played = [], wins = [], losses = [], machine_probs = []):
 
         self.total_reward = total_reward
         self.machine_played = machine_played
@@ -12,10 +12,11 @@ class N_Bernoulli_Bandit:
         self.losses = losses
         self.machine_probs = machine_probs
         self.rounds = rounds
+        self.num_machines = num_machines
 
     def simulate(self, num_machines = 3, rounds = 1000, prob_range = [0,1]):
+        self.num_machines = num_machines
         machine_probs = np.random.uniform(low=prob_range[0], high=prob_range[1], size=num_machines).round(2) # Win Probability of Machines
-        rounds = 500 # Total Plays
         wins = np.zeros(num_machines) #Tracks Wins for Each Machine
         losses = np.zeros(num_machines) # Tracks Losses for Each Machine
         total_reward = 0 # Tracks Overall Wins for All Rounds
@@ -56,15 +57,16 @@ class N_Bernoulli_Bandit:
         df = pd.DataFrame(self.wins, columns=['Wins'])
         df['Losses'] = self.losses
         df['Actual Prob'] = self.machine_probs
-        print(df)
+        display(df)
         print()
         print(f"Machine {np.argmax(self.wins)} won most, with {int(self.wins[np.argmax(self.wins)])} wins")
+        print(f"Machine {np.argmax(self.machine_probs)} had the highest payout")
         print(f"Total Reward: {self.total_reward[0]}")
         print(f"Total Regret: {regret[0]}")
 
     def hist_plot(self):
         # Plot Histogram of Total Plays For Each Machine
-        plt.hist(self.machine_played)
+        plt.hist(self.machine_played, bins=self.num_machines)
         plt.title('Histogram of Machine Plays')
         plt.xlabel('Machines')
         plt.ylabel('Number of Times Selected')
